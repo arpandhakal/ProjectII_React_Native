@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState, useContext} from 'react';
 import {StyleSheet} from 'react-native';
 import {
   ApplicationProvider,
@@ -19,7 +19,7 @@ import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 
-//screens
+//screens and components
 
 import HomeScreen from './Screens/HomeScreen';
 import LoginScreen from './Screens/LoginScreen';
@@ -27,6 +27,8 @@ import RegisterScreen from './Screens/RegisterScreen';
 import SettingsScreen from './Screens/SettingsScreen';
 import SplashScreen from './Screens/SplashScreen';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
+import {AuthContext, AuthProvider} from './firebase/AuthProvider';
+import auth from '@react-native-firebase/auth';
 
 const HeartIcon = props => <Icon {...props} name="heart" />;
 
@@ -63,19 +65,39 @@ const TabNavigator = () => (
 const Stack = createNativeStackNavigator();
 
 export default function App() {
+  const [initializing, setInitializing] = useState(true);
+  const {user, setUser} = useContext(AuthContext);
+
+  const onAuthStateChanged = user => {
+    setUser(user);
+    if (initializing) setInitializing(failse);
+  };
+
+  useEffect(() => {
+    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
+    return subscriber; // unsubscribe on unmount
+  }, []);
+
+  if (initializing) return null;
+
   return (
     <>
       <IconRegistry icons={EvaIconsPack} />
       <ApplicationProvider {...eva} theme={eva.light}>
         <SafeAreaProvider>
+          {/* <AuthProvider> */}
           <NavigationContainer>
-            <Stack.Navigator initialRouteName="tabs">
+            <Stack.Navigator initialRouteName="Login">
               <Stack.Screen
                 name="Login"
                 component={LoginScreen}
                 options={{headerShown: false}}
               />
-              <Stack.Screen name="Register" component={RegisterScreen} />
+              <Stack.Screen
+                name="Register"
+                component={RegisterScreen}
+                options={{headerShown: false}}
+              />
               <Stack.Screen name="Splash" component={SplashScreen} />
               <Stack.Screen
                 options={{headerShown: false}}
@@ -84,6 +106,7 @@ export default function App() {
               />
             </Stack.Navigator>
           </NavigationContainer>
+          {/* </AuthProvider> */}
         </SafeAreaProvider>
       </ApplicationProvider>
     </>
